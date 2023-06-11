@@ -1,0 +1,8 @@
+add this to theme's functions.php:
+
+function include_custom_post_types_in_archive_pages($query) {
+    if (is_post_type_archive(['movie', 'tv-show']) && $query->is_main_query()) {
+        $query->set('posts_per_page', 10); // Set the number of posts per page
+    }
+}
+add_action('pre_get_posts', 'include_custom_post_types_in_archive_pages');
