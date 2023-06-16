@@ -5,21 +5,37 @@ class TMDb_Client {
 
     public function __construct() {
         $this->bearer_token = get_option('tmdb_client_bearer_token');
+        $this->init();
+    }
+
+    private function init() {
         $this->register_shortcodes();
         $this->register_admin_page();
     }
 
-    public function register_shortcodes() {
-        add_shortcode('tmdb_person_movies_tv_shows', array($this, 'shortcode_person_movies_tv_shows'));
-        add_shortcode('tmdb_person_details', array($this, 'shortcode_person_details'));
-        add_shortcode('tmdb_genres', array($this, 'shortcode_genres'));
-        add_shortcode('tmdb_movie_tv_details', array($this, 'shortcode_movie_tv_details'));
+    private function register_shortcodes() {
+        $shortcodes = [
+            'tmdb_person_movies_tv_shows' => 'shortcode_person_movies_tv_shows',
+            'tmdb_person_details'         => 'shortcode_person_details',
+            'tmdb_genres'                 => 'shortcode_genres',
+            'tmdb_movie_tv_details'       => 'shortcode_movie_tv_details',
+        ];
+
+        foreach ($shortcodes as $code => $callback) {
+            add_shortcode($code, [$this, $callback]);
+        }
     }
 
-    public function register_admin_page() {
-        add_action('admin_menu', array($this, 'add_admin_menu'));
-        add_action('admin_init', array($this, 'register_settings'));
-        add_action('admin_post_tmdb_client_create_pages', array($this, 'handle_create_pages_form'));
+    private function register_admin_page() {
+        $actions = [
+            'admin_menu'                 => 'add_admin_menu',
+            'admin_init'                 => 'register_settings',
+            'admin_post_tmdb_client_create_pages' => 'handle_create_pages_form',
+        ];
+
+        foreach ($actions as $action => $callback) {
+            add_action($action, [$this, $callback]);
+        }
     }
 
     public function handle_create_pages_form() {
@@ -108,13 +124,7 @@ class TMDb_Client {
           return 'Error fetching data from TMDb API.';
       }
 
-      ob_start();
-      $template = locate_template('tmdb-client/person-movies-tv-shows.php');
-      if (!$template) {
-          $template = plugin_dir_path(__FILE__) . '../templates/person-movies-tv-shows.php';
-      }
-      include $template;
-      return ob_get_clean();
+      return $this->get_template_output('person-movie-tv-shows', $atts);
     }
 
     public function shortcode_person_details($atts) {
@@ -131,13 +141,7 @@ class TMDb_Client {
           return 'Error fetching data from TMDb API.';
       }
   
-      ob_start();
-      $template = locate_template('tmdb-client/person-details.php');
-      if (!$template) {
-          $template = plugin_dir_path(__FILE__) . '../templates/person-details.php';
-      }
-      include $template;
-      return ob_get_clean();
+      return $this->get_template_output('person-details', $atts);
     }
 
     public function shortcode_genres($atts) {
@@ -201,13 +205,19 @@ class TMDb_Client {
           }
       }
 
-      ob_start();
-      $template = locate_template('tmdb-client/movie-tv-details.php');
-      if (!$template) {
-          $template = plugin_dir_path(__FILE__) . '../templates/movie-tv-details.php';
-      }
-      include $template;
-      return ob_get_clean();
+      return $this->get_template_output('movie-tv-details', $atts);
+    }
+
+    private function get_template_output($template_name, $atts) {
+        $template = locate_template("tmdb-client/{$template_name}.php");
+        
+        if (!$template) {
+            $template = plugin_dir_path(__FILE__) . "../templates/{$template_name}.php";
+        }
+
+        ob_start();
+        include $template;
+        return ob_get_clean();
     }
 
     // Helper function to make API requests
