@@ -98,18 +98,19 @@ class TMDb_Client_Shortcodes {
         $atts = shortcode_atts(array('id' => '', 'type' => 'movie'), $atts);
         $id = intval($atts['id']);
         $type = in_array($atts['type'], array('movie', 'tv')) ? $atts['type'] : 'movie';
-
+    
         if ($id <= 0) {
             return 'Invalid ID.';
         }
-
+    
         $details = $this->api->tmdb_api_request("/{$type}/{$id}");
         $videos = $this->api->tmdb_api_request("/{$type}/{$id}/videos");
-
-        if (!$details || !$videos) {
+        $credits = $this->api->tmdb_api_request("/{$type}/{$id}/credits"); // Added API request for credits
+    
+        if (!$details || !$videos || !$credits) { // Added check for credits
             return 'Error fetching data from TMDb API.';
         }
-
+    
         $youtube_trailer = '';
         foreach ($videos['results'] as $video) {
             if ($video['site'] === 'YouTube' && $video['type'] === 'Trailer') {
@@ -117,7 +118,8 @@ class TMDb_Client_Shortcodes {
                 break;
             }
         }
-
-        return $this->parent->get_template_output('movie-tv-details', $atts, array('details' => $details, 'youtube_trailer' => $youtube_trailer));
+    
+        // Added cast and crew data to the template output
+        return $this->parent->get_template_output('movie-tv-details', $atts, array('details' => $details, 'youtube_trailer' => $youtube_trailer, 'cast' => $credits['cast'], 'crew' => $credits['crew']));
     }
 }
