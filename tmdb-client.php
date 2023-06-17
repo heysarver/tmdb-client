@@ -16,7 +16,7 @@ require_once plugin_dir_path(__FILE__) . 'includes/class-tmdb-client.php';
 
 function run_tmdb_client() {
     $plugin = new TMDb_Client();
-    $plugin->run();
+    //$plugin->run();
 }
 
 run_tmdb_client();
